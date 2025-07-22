@@ -299,6 +299,20 @@ if __name__ == "__main__":
 
         elif choice == "SG_SCANNER":
 
+            # build choice list for SG Regions
+            sg_regions_menu = [menu_builder.MenuItem("All Regions", "ALL_REGIONS"),
+                            menu_builder.MenuItem("Current Region Only", "CURRENT_ONLY")]
+
+            sg_region_choice = menu_builder.create_menu(config.header_name,section_name="Security Group Regions",description="What regions would you like to scan?", menu_items=sg_regions_menu,config_section=config_info)
+
+            if sg_region_choice == "ALL_REGIONS":
+                sg_regions = aws_utils.get_regions(config.session,region_status_filter=aws_utils.AccountStatusFilters.ENABLED)
+            elif sg_region_choice == "CURRENT_ONLY":
+                sg_regions = ["us-east-1"]
+            else:
+                continue
+
+
             sg_results = {}
             filename_account_id = config.aws_account_id
 
@@ -311,8 +325,7 @@ if __name__ == "__main__":
             print(regions_header_menu)
 
             # Loop though all the regions and get the security groups
-            for region in aws_utils.get_regions(config.session,
-                                                region_status_filter=aws_utils.AccountStatusFilters.ENABLED):
+            for region in sg_regions:
                 # Check for a profile name and reuse it to create a new session for the region change otherwise use
                 # the key information
                 if config.aws_profile_name:
