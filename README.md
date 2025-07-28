@@ -90,7 +90,61 @@ The Create AWS functionality simplifies the creation of AWS boto3 sessions by al
 connection settings flexibly. Users can specify the AWS region, profile name, and access keys, with an optional Security
 Token Service (STS) session key for enhanced security and temporary credentials.
 
-![Create AWS Session Diagram](docs/CreateAWSSession.png)
+```mermaid
+---
+config:
+  theme: 'base'
+  themeVariables:
+    primaryColor: '#FFFFFF'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#000000'
+    lineColor: '#F8B229'
+    secondaryColor: '#20ab20ff'
+    tertiaryColor: '#FFFFFF'
+---
+flowchart LR
+        TTK@{ shape: div-rect, label: "TTK" } --> aws(Create AWS Session)
+        aws --> pfn(Profile Name)
+        aws --> ks(Key/Secret)
+        aws --> sso(AWS SSO Login)
+        aws --> cfg(Configure AWS SSO)
+        aws --> asmrole(Assume Role)
+
+        ups["`**User Prompts**
+        - Profile Name (optional)
+        - Region Name (optional)`"]
+        pfn --> ups
+
+        ksup["**User Prompts**
+        - Access Key Id
+        - Secrect Access Key
+        - Session Token (optional)
+        - Region Name (optional)"]
+        ks --> ksup
+
+        sso --> ssosub["`**Subprocess:** 
+        _aws sso login_`"]
+
+        cfg --> cfgsso["`**Subprocess:**
+        _aws configure sso_`"]
+
+        asmrprompt["**User Prompts**
+        - Role ARN
+        - Session Name (optional)
+        - Region Name (optional)"]
+        asmrole --> asmrprompt
+
+        ssosub & cfgsso -->ssologin["`Rerun Create AWS Session and run **Profile Name** providing the name of the profile created in SSO`"]
+
+        ups & ksup & ssologin & asmrprompt -->create_boto_session["`**Create boto3 session**
+        _boto3.session.Session(**params)_`"]
+
+        create_boto_session --> save_session["`Save session and config info globally`"]@{shape: div-rect}
+
+        classDef green fill:#20ab20ff,stroke:#333,stroke-width:2px;
+        class TTK,save_session green
+
+```
 
 # Show Regions
 
@@ -98,7 +152,57 @@ The Show Regions functionality allows for users to easily list out all AWS regio
 There are options to show all regions, show only the regions that are enabled, or show only the regions that are
 disabled.
 
-![Show Regions Diagram](docs/RegionsCurrentState.png)
+```mermaid
+---
+config:
+  theme: 'base'
+  themeVariables:
+    primaryColor: '#FFFFFF'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#000000'
+    lineColor: '#F8B229'
+    secondaryColor: '#FFFFFF'
+    tertiaryColor: '#FFFFFF'
+    edgeLabelBackground: '#CBCBCB'
+---
+flowchart LR
+        %% Define Objects
+        start@{ shape: div-rect, label: "TTK" }
+        id1(Create AWS Session)
+        id2(Show Regions)
+
+        id3["`**All Regions**
+         _ENABLED_ | _ENABLING_ | _ENABLED_BY_DEFAULT_ | _DISABLED_ | _DISABLING_`"]
+
+        id4["`**Enabled Only**
+         _ENABLED_ | _ENABLING_ | _ENABLED_BY_DEFAULT`"]
+
+
+       id5["`**Disabled Only**
+        _DISABLED_ | _DISABLING_`"]
+
+       id6["`**Get Regions**
+       _account.list_regions_`"]
+
+       id7["`**Get Region Friendly Name**
+       _ssm.get_parameter_`"]
+
+        exit["`Print Output`"]@{shape: div-rect}
+
+
+        %% Connect Objects
+        start -->id1
+        id1 --> id2
+        id2 --> id3 & id4 & id5
+        id3 & id4 & id5 --> id6
+        id6 --Loop Regions --> id7
+        id7 --> exit
+
+
+        %% Define Override styles
+        classDef green fill:#20ab20ff,stroke:#333,stroke-width:2px;
+        class start,exit green
+```
 
 # Security Group Scanner
 
@@ -106,14 +210,123 @@ The Security Group Scanner is a powerful feature designed to enhance your AWS se
 regions within your account, inspecting each security group per region. The results are parsed and compiled into a
 comprehensive and easy-to-read report, both in text and JSON formats.
 
-![Security Group Scanner Diagram](docs/SecurityGroupScanner-CurrentState.png)
+```mermaid
+---
+config:
+  theme: 'base'
+  themeVariables:
+    primaryColor: '#FFFFFF'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#000000'
+    lineColor: '#F8B229'
+    secondaryColor: '#FFFFFF'
+    tertiaryColor: '#FFFFFF'
+    edgeLabelBackground: '#CBCBCB'
+---
+graph TD
+        %% Define Objects
+        start@{ shape: div-rect, label: "TTK" }
+        id1(Create AWS Session)
+        id2(Security Group Scanner)
+
+        id3["`**Get Regions**
+        _account.list_regions_`"]
+
+        id4["`**Create AWS Session**
+        _for each region_`"]
+
+        id5["`**Get Security Groups**
+        _ec2.describe_security_groups_`"]
+
+        id6["`**Map SG Response to Model Objects**
+        add objects to list`"]
+
+        id7(Write SG Obj list ot json file on local fs)
+
+        id8(Format SG obj list and print txt report on local fs)
+   
+        exit["`Notify user of report completion`"]@{shape: div-rect}
+
+        %% Connect Objects
+        start --> id1
+        id1 --> id2
+        id2 --> id3
+        id3 -- loop regions --> id4
+
+        id4 --> id5
+        id5 -- loop security groups --> id6
+        id6 --> id7
+        id7 --> id8
+        id8 --> exit
+    
+        %% Define Override styles
+        classDef green fill:#20ab20ff,stroke:#333,stroke-width:2px;
+        class start,exit green
+```
 
 # IAM User Report
 
 The IAM User Report feature provides a detailed audit of all IAM users within your AWS account. It generates a
 comprehensive text report and a JSON file, capturing detailed information about each IAM user.
 
-![IAM User Report Diagram](docs/IAMUserReport-CurrentState.png)
+```mermaid
+---
+config:
+  theme: 'base'
+  themeVariables:
+    primaryColor: '#FFFFFF'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#000000'
+    lineColor: '#F8B229'
+    secondaryColor: '#FFFFFF'
+    tertiaryColor: '#FFFFFF'
+    edgeLabelBackground: '#CBCBCB'
+---
+flowchart LR
+        %% Define Objects
+        start@{ shape: div-rect, label: "TTK" }
+        id1(Create AWS Session)
+        id2(IAM Tools)
+        id3(Generate IAM Users Report)
+
+        id4["`**Get IAM Users**
+        _iam.list_users_`"]
+
+        id5["`**MFA Enabled**
+        _iam.list_mfa_devices_`"]
+
+        id6["`**Get Access Keys**
+        _iam.list_access_keys_`"]
+
+        id7["`**Get User Groups**
+        _iam.list_groups_for_user_`"]
+
+        id8["`**Get User Tags**
+        _iam.list_user_tags_`"]
+
+        id9["`Map IAM Responses to Model Objects
+        _add objects to list_`"]
+
+        id10(Write IAM Obj list ot json file on local fs)
+        id11(Format IAM obj list and print txt report on local fs)
+
+        exit["`Notify user of report completion`"]@{shape: div-rect}
+
+        %% Connect Objects
+        start --> id1
+        id1 --> id2
+        id2 --> id3
+        id3 --> id4
+        id4 -- loop users --> id5 & id6 & id7 & id8
+        id5 & id6 & id7 & id8 --> id9
+        id9 --> id10
+        id10 --> id11
+        id11 --> exit
+
+        %% Define Override styles
+        classDef green fill:#20ab20ff,stroke:#333,stroke-width:2px;
+        class start,exit green
+```
 
 # IAM Key Rotator
 
@@ -125,7 +338,110 @@ one if only one key exists, or replacing the oldest key, deactivating the remain
 if two keys are present. After each key rotation, the new access key and secret access key are securely stored as a JSON
 file on the TTK user's local file system, ensuring ease of access and future reference.
 
-![IAM Key Rotator Diagram](docs/KeyRotator-CurrentState.png)
+```mermaid
+---
+config:
+  theme: 'base'
+  themeVariables:
+    primaryColor: '#FFFFFF'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#000000'
+    lineColor: '#F8B229'
+    secondaryColor: '#FFFFFF'
+    tertiaryColor: '#FFFFFF'
+    edgeLabelBackground: '#CBCBCB'
+---
+flowchart TD
+        %% Define Objects
+        start@{ shape: div-rect, label: "TTK" }
+        id1(Create AWS Session)
+        id2(IAM Tools)
+        id3(Search IAM Users)
+
+        id4["`**User Prompts**
+        - IAM Username`"]
+
+        id5["`**Get IAM users**
+        _iam.list_users_`"]
+
+        id6(Use the user provided input to find the desired user)
+
+        id7["`**Display the IAM User Details**
+        _High level details_`"]
+
+        id8(Show User Details)
+        id9(Rotate Access Keys)
+        id10(Quarantine User)
+
+        id11(Format user and print)@{shape: div-rect}
+
+        id12["`**Get IAM User Access keys**
+        _iam.get_user
+        iam.list_access_keys`"]
+
+        id13{Quarantine group exists}
+
+        id14("`**Add user to quarantine group**
+        _iam.add_user_to_group_`")
+
+        id15("`**Create quarantine group and deny all policy to itp**
+        _iam.create_group_
+        _iam.attach_group_policy_`")
+
+        id16{Access Keys}
+
+        id17("`**Create New Access Key**
+        _iam.create_access_key_`")
+        
+        id18("`**Create New Access Key**
+        _iam.create_access_key_`")
+
+        id19("`**Identify oldest key and delete it**
+        _iam.delete_access_key_`")
+
+        id20("`**Inactivate Old Key**
+        _iam.update_access_key_`")
+
+        id23("`**Create New Access Key**
+        _iam.create_access_key_`")
+
+        id21("`**Inactivate Old Key**
+        _iam.update_access_key`")
+
+        id22(Write new access key to json file on local fs)
+
+        exit["`Notify user of changes`"]@{shape: div-rect}
+
+        %% Connect Objects
+        start --> id1
+        id1 --> id2
+        id2 --> id3
+        id3 --> id4
+        id4 --> id5
+        id5 -- Loop Users --> id6
+        id6 --> id7
+        id7 --> id8 & id9 & id10
+        id8 --> id11
+        id9 --> id12
+        id12 --> id16
+        id16 -- No Keys --> id17
+        id16 -- 1 Key--> id18
+        id16 -- 2 Keys --> id19
+        id18 --> id20
+        id19 --> id23
+        id23 --> id21
+        id17 & id20 & id21 --> id22
+        id22 --> exit
+        id10 --> id13
+        id13 -- Yes --> id14
+        id13 -- No --> id15
+        id15 --> id14
+        id14 --> exit
+
+        %% Define Override styles
+        classDef green fill:#20ab20ff,stroke:#333,stroke-width:2px;
+        class start,exit,id11 green
+```
 
 # S3 Explorer
 
@@ -137,7 +453,132 @@ secure upload and download operations. This tool enhances user productivity by f
 and secure data transfer capabilities within AWS S3.
 
 
-![S3 Explorer Diagram](docs/S3Explorer-CurrentState.png)
+```mermaid
+---
+config:
+  theme: 'base'
+  themeVariables:
+    primaryColor: '#FFFFFF'
+    primaryTextColor: '#000000'
+    primaryBorderColor: '#000000'
+    lineColor: '#F8B229'
+    secondaryColor: '#FFFFFF'
+    tertiaryColor: '#FFFFFF'
+    edgeLabelBackground: '#CBCBCB'
+---
+flowchart TD
+        %% Define Objects
+        start@{ shape: div-rect, label: "TTK" }
+        id1(Create AWS Session)
+        id2(S3 Explorer)
+        id3("`**User Prompts**
+        S3 Bucket Name`")
+
+        id4["`**Get S3 Buckets**
+        _s3.list_buckets_`"]
+
+        id5(Use the user provided input to find the desired bucket)
+
+        id6["`**Get the objects at the current level of the s3 bucket**
+        _s3.list_objects_v2_`"]
+
+        id7{Folder Options}
+
+        id8(Select Item)
+
+        id9(Search)
+
+        id10(Download Folder)
+
+        id11(Upload File to Folder)
+
+        id12(Generate Upload Presigned URL)
+
+        id13{Select Options}
+
+        id14("`**User Prompts**
+        - _Search Term_`")
+
+        id15("`**User Prompts**
+        - _Abs Path for download_`")
+
+        id16("`**User Prompts**
+        - _Abs Path of local file_`")
+
+        id17("`**User Prompts**
+        - _Desired filename_
+        - Abs Path of local file`")
+
+        id18("`**Get File Info**
+        _s3.head_object_`")
+
+        id19{File Options}
+
+        id20("`**Upload File**
+        _s3_upload_file_`")
+
+        id21("`**Generate Presigned URL**
+        _s3.generate_presigned_post_`")
+
+        id22("`**Download Files**
+        _s3.download_file_`")
+
+        id23(Recursivly enter each folder and get files)
+
+        id24(Create curl command as example)
+
+        id25(Download File)
+
+        id26(Generate Presigned URL)
+
+        id27("`**User Prompts**
+        - Abs Path of local file`")
+
+        id28("`**User Prompts**
+        - Desired filename
+        - Abs Path of local file`")
+
+        id29("`**Download Files**
+        _s3.download_file`")
+
+        id30("`**Generate Download Presigned URL**
+        _s3.generate_presigned_url_`")
+
+        %% Connect Objects
+        start --> id1
+        id1 --> id2
+        id2 --> id3
+        id3 --> id4
+        id4 -- Loop Buckets --> id5
+        id5 --> id6
+        id6 --> id7
+        id7 --> id8 & id9 & id10 & id11 & id12
+        id8 --> id13
+        id6 --Folder--> id13
+        id13 --Files--> id18
+        id18 --> id19
+        id9 --> id14
+        id14 --> id6
+        id10 --> id15
+        id15 --Loop Files --> id22
+        id15 --Loop Folders --> id23
+        id23 --> id22
+        id11 --> id16
+        id16 -->id20
+        id12 --> id17
+        id17 --> id21
+        id21 --> id24
+        id19 --> id25 & id26
+        id25 --> id27
+        id26 -->id28
+        id28 --> id30
+        id27 --> id29
+
+
+        %% Define Override styles
+        classDef green fill:#20ab20ff,stroke:#333,stroke-width:2px;
+        class start,exit green
+```
 
 
 ## License
