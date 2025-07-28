@@ -102,7 +102,7 @@ config:
     secondaryColor: '#20ab20ff'
     tertiaryColor: '#FFFFFF'
 ---
-flowchart
+flowchart LR
         TTK@{ shape: div-rect, label: "TTK" } --> aws(Create AWS Session)
         aws --> pfn(Profile Name)
         aws --> ks(Key/Secret)
@@ -165,7 +165,7 @@ config:
     tertiaryColor: '#FFFFFF'
     edgeLabelBackground: '#CBCBCB'
 ---
-flowchart
+flowchart LR
         %% Define Objects
         start@{ shape: div-rect, label: "TTK" }
         id1(Create AWS Session)
@@ -223,7 +223,7 @@ config:
     tertiaryColor: '#FFFFFF'
     edgeLabelBackground: '#CBCBCB'
 ---
-graph
+flowchart LR
         %% Define Objects
         start@{ shape: div-rect, label: "TTK" }
         id1(Create AWS Session)
@@ -282,7 +282,7 @@ config:
     tertiaryColor: '#FFFFFF'
     edgeLabelBackground: '#CBCBCB'
 ---
-flowchart
+flowchart LR
         %% Define Objects
         start@{ shape: div-rect, label: "TTK" }
         id1(Create AWS Session)
@@ -351,7 +351,7 @@ config:
     tertiaryColor: '#FFFFFF'
     edgeLabelBackground: '#CBCBCB'
 ---
-flowchart
+flowchart LR
         %% Define Objects
         start@{ shape: div-rect, label: "TTK" }
         id1(Create AWS Session)
@@ -466,7 +466,7 @@ config:
     tertiaryColor: '#FFFFFF'
     edgeLabelBackground: '#CBCBCB'
 ---
-flowchart
+flowchart LR
         %% Define Objects
         start@{ shape: div-rect, label: "TTK" }
         id1(Create AWS Session)
